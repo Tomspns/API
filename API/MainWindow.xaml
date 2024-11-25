@@ -7,6 +7,6 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-
+        <ListBox x:Name="tweetListBox" HorizontalAlignment="Center" VerticalAlignment="Center" Width="600" Height="400"/>
     </Grid>
 </Window>
