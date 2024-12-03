@@ -1,12 +1,12 @@
-﻿<Window x:Class="API.MainWindow"
+﻿<Window x:Class="TwitterFeedApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:API"
+        xmlns:local="clr-namespace:TwitterFeedApp"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <ListBox x:Name="tweetListBox" HorizontalAlignment="Center" VerticalAlignment="Center" Width="600" Height="400"/>
+        <ListBox Name="TweetsListBox" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
     </Grid>
 </Window>
