@@ -1,77 +1,88 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using System.Windows;
 using Newtonsoft.Json;
-using Tweetinvi;
-using System.Windows.Media.Animation;
-using Tweetinvi.Models;
-using Tweetinvi.Core.Models;
-using TweetSharp;
 
 namespace TwitterFeedApp
 {
     public partial class MainWindow : Window
     {
+        private readonly string bearerToken = "AAAAAAAAAAAAAAAAAAAAAKitxAEAAAAAkJGgrVb4nBuKEoyTH9EazYpcFLk%3DByDukyZycv7Xfq2CL8AUuPrJWmkuZpggiVAqsqZf9NLr2aRRGj"; // Remplacez par votre Bearer Token
+
         public MainWindow()
         {
             InitializeComponent();
             LoadTweets();
         }
 
-        private void LoadTweets()
+        private async void LoadTweets()
         {
-            var consumerKey = "qsc5SXJkZeEK8fbL7Iqjk6ACk";
-            var consumerSecret = "fDSMeRCANfL7Gio3k3NiOqEnksgl4pBvPKJpwqcTrsOS1m81Sw";
-            var accessToken = "1860986408858435584-D0lapfTYWU5ecw7eyiSzIXUZ7PN3gR";
-            var accessTokenSecret = "nmyPIMS278ciFAbdiiuBTPS9yYv8xM7Hg7fCWjahNJYFu";
-
-            var service = new TwitterService(consumerKey, consumerSecret, accessToken, accessTokenSecret);
-
             var usernames = new List<string>
-    {
-        "elonmusk", "jack", "neiltyson", "BarackObama",
-        "realDonaldTrump", "ladygaga", "BillGates",
-        "justinbieber", "rihanna", "taylorswift13"
-    };
-
-            foreach (var username in usernames)
             {
-                try
-                {
-                    var tweets = service.ListTweetsOnUserTimeline(new ListTweetsOnUserTimelineOptions
-                    {
-                        ScreenName = username,
-                        Count = 5
-                    });
+                "elonmusk", "jack", "neiltyson", "BarackObama",
+                "realDonaldTrump", "ladygaga", "BillGates",
+                "justinbieber", "rihanna", "taylorswift13",
+                "NASA"
+            };
 
-                    // Vérifiez si tweets n'est pas null et a des éléments
-                    if (tweets == null || !tweets.Any())
-                    {
-                        TweetsListBox.Items.Add($"Aucun tweet trouvé pour @{username}.");
-                        continue;
-                    }
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 
-                    foreach (var tweet in tweets)
-                    {
-                        if (tweet != null)
-                        {
-                            TweetsListBox.Items.Add($"@{username}: {tweet.Text} (Publié le: {tweet.CreatedDate})");
-                        }
-                    }
-                }
-                catch (Exception ex)
+                foreach (var username in usernames)
                 {
-                    TweetsListBox.Items.Add($"Erreur lors de la récupération des tweets de @{username}: {ex.Message}");
+                    try
+                    {
+                        // Étape 1 : Obtenez l'ID de l'utilisateur
+                        var userResponse = await client.GetAsync($"https://api.twitter.com/2/users/by/username/{username}");
+                        userResponse.EnsureSuccessStatusCode();
+
+                        var userContent = await userResponse.Content.ReadAsStringAsync();
+                        // Extraire l'ID de l'utilisateur du JSON (à l'aide de Newtonsoft.Json ou d'un autre moyen)
+
+                        // Exemple de désérialisation pour obtenir l'ID (ajoutez Newtonsoft.Json à votre projet)
+                        var userId = ExtractUserId(userContent); // Implémentez cette méthode pour extraire l'ID
+
+                        // Étape 2 : Récupérez les tweets
+                        var tweetsResponse = await client.GetAsync($"https://api.twitter.com/2/users/{userId}/tweets");
+                        tweetsResponse.EnsureSuccessStatusCode();
+
+                        var tweetsContent = await tweetsResponse.Content.ReadAsStringAsync();
+                        // Traitez les tweets ici (désérialisez et affichez-les dans la ListBox)
+
+                        TweetsListBox.Items.Add($"Tweets de @{username}: {tweetsContent}"); // Remplacez ceci par un traitement approprié
+                    }
+                    catch (Exception ex)
+                    {
+                        TweetsListBox.Items.Add($"Erreur lors de la récupération des tweets de @{username}: {ex.Message}");
+                    }
                 }
             }
         }
+
+        private string ExtractUserId(string json)
+        {
+            // Implémentez la logique pour désérialiser le JSON et extraire l'ID
+            // Par exemple, en utilisant Newtonsoft.Json
+            // var user = JsonConvert.DeserializeObject<UserResponse>(json);
+            // return user.data.id;
+
+            throw new NotImplementedException("Implémentez la méthode pour extraire l'ID de l'utilisateur.");
+        }
+    }
+
+    // Créez une classe pour désérialiser la réponse de l'utilisateur
+    public class UserResponse
+    {
+        public UserData data { get; set; }
+    }
+
+    public class UserData
+    {
+        public string id { get; set; }
+        public string username { get; set; }
     }
 }
