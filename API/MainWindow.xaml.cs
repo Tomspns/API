@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Windows;
 using Newtonsoft.Json;
+using TwitterFeedApp.Model;
 
 namespace TwitterFeedApp
 {
@@ -12,51 +13,84 @@ namespace TwitterFeedApp
     {
         private readonly string bearerToken = "AAAAAAAAAAAAAAAAAAAAAKitxAEAAAAAkJGgrVb4nBuKEoyTH9EazYpcFLk%3DByDukyZycv7Xfq2CL8AUuPrJWmkuZpggiVAqsqZf9NLr2aRRGj"; // Remplacez par votre Bearer Token
 
+        private readonly List<TweetData> ListTwitdata = new List<TweetData>();
+
+        private readonly List<string> usernames = new List<string>
+        {
+            "elonmusk",
+            "jack",
+            "barackobama",
+            "nasa"
+        };
+
         public MainWindow()
         {
             InitializeComponent();
-            LoadTweets(1);
+            _: LoadTweets(5); // Charger 5 tweets par utilisateur
+
+          //  ListTwitdata = FakeTweetData.GetFakeTweets();
         }
 
-        private async void LoadTweets(int tweetLimit = 5) // Limite par défaut à 5 tweets
+        private async void LoadTweets(int tweetLimit)
         {
-            var username = "elonmusk"; // Garder un seul utilisateur
+            TweetsListBox.Items.Clear(); // Vider la ListBox avant de charger de nouveaux tweets
 
-            using (var client = new HttpClient())
+            foreach (var username in usernames)
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-
-                try
+                using (var client = new HttpClient())
                 {
-                    // Étape 1 : Obtenez l'ID de l'utilisateur
-                    var userResponse = await client.GetAsync($"https://api.twitter.com/2/users/by/username/{username}");
-                    userResponse.EnsureSuccessStatusCode();
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 
-                    var userContent = await userResponse.Content.ReadAsStringAsync();
-                    var userId = ExtractUserId(userContent);
-
-                    // Étape 2 : Récupérez les tweets avec une limite
-                    var tweetsResponse = await client.GetAsync($"https://api.twitter.com/2/users/{userId}/tweets?max_results={tweetLimit}");
-                    tweetsResponse.EnsureSuccessStatusCode();
-
-                    var tweetsContent = await tweetsResponse.Content.ReadAsStringAsync();
-                    var tweetResponse = JsonConvert.DeserializeObject<TweetResponse>(tweetsContent);
-
-                    if (tweetResponse?.data != null)
+                    try
                     {
-                        foreach (var tweet in tweetResponse.data)
+                        var userResponse = await client.GetAsync($"https://api.twitter.com/2/users/by/username/{username}");
+                        if (!userResponse.IsSuccessStatusCode)
                         {
-                            TweetsListBox.Items.Add($"@{username}: {tweet.text}");
+                            var errorContent = await userResponse.Content.ReadAsStringAsync();
+                            TweetsListBox.Items.Add($"Erreur lors de la récupération de l'utilisateur {username}: {userResponse.StatusCode} - {errorContent}");
+                            continue; // Passer à l'utilisateur suivant
+                        }
+
+                        var userContent = await userResponse.Content.ReadAsStringAsync();
+                        var userId = ExtractUserId(userContent);
+
+                        if (string.IsNullOrEmpty(userId))
+                        {
+                            TweetsListBox.Items.Add($"Erreur : ID d'utilisateur non trouvé pour @{username}.");
+                            continue; // Passer à l'utilisateur suivant
+                        }
+
+                        var tweetsResponse = await client.GetAsync($"https://api.twitter.com/2/users/{userId}/tweets?max_results={tweetLimit}");
+                        if (!tweetsResponse.IsSuccessStatusCode)
+                        {
+                            var errorContent = await tweetsResponse.Content.ReadAsStringAsync();
+                            TweetsListBox.Items.Add($"Erreur lors de la récupération des tweets pour @{username}: {tweetsResponse.StatusCode} - {errorContent}");
+                            continue; // Passer à l'utilisateur suivant
+                        }
+
+                        var tweetsContent = await tweetsResponse.Content.ReadAsStringAsync();
+                        var tweetResponse = JsonConvert.DeserializeObject<TweetResponse>(tweetsContent);
+
+                        if (tweetResponse?.data != null)
+                        {
+                            foreach (var tweet in tweetResponse.data)
+                            {
+                                TweetsListBox.Items.Add($"{tweet.text} \nPosté par @{username} le {DateTime.Now:g}");
+                            }
+                        }
+                        else
+                        {
+                            TweetsListBox.Items.Add($"Aucun tweet trouvé pour @{username}.");
                         }
                     }
-                    else
+                    catch (HttpRequestException ex)
                     {
-                        TweetsListBox.Items.Add($"Aucun tweet trouvé pour @{username}.");
+                        TweetsListBox.Items.Add($"Erreur de requête pour @{username}: {ex.Message}");
                     }
-                }
-                catch (Exception ex)
-                {
-                    TweetsListBox.Items.Add($"Erreur lors de la récupération des tweets de @{username}: {ex.Message}");
+                    catch (Exception ex)
+                    {
+                        TweetsListBox.Items.Add($"Erreur générale pour @{username}: {ex.Message}");
+                    }
                 }
             }
         }
@@ -66,29 +100,5 @@ namespace TwitterFeedApp
             var userResponse = JsonConvert.DeserializeObject<UserResponse>(json);
             return userResponse?.data?.id;
         }
-    }
-
-    // Créez une classe pour désérialiser la réponse de l'utilisateur
-    public class UserResponse
-    {
-        public UserData data { get; set; }
-      
-    }
-
-    public class UserData
-    {
-        public string id { get; set; }
-        public string username { get; set; }
-    }
-
-    public class TweetResponse
-    {
-        public List<TweetData> data { get; set; }
-    }
-
-    public class TweetData
-    {
-        public string id { get; set; }
-        public string text { get; set; }
     }
 }
