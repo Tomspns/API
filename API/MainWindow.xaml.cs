@@ -18,17 +18,15 @@ namespace TwitterFeedApp
         private readonly List<string> usernames = new List<string>
         {
             "elonmusk",
-            "jack",
-            "barackobama",
-            "nasa"
+            "jack"
         };
 
         public MainWindow()
         {
             InitializeComponent();
-            _: LoadTweets(5); // Charger 5 tweets par utilisateur
+        _: LoadTweets(5); // Charger 5 tweets par utilisateur
 
-          //  ListTwitdata = FakeTweetData.GetFakeTweets();
+            //  ListTwitdata = FakeTweetData.GetFakeTweets();
         }
 
         private async void LoadTweets(int tweetLimit)
@@ -75,7 +73,16 @@ namespace TwitterFeedApp
                         {
                             foreach (var tweet in tweetResponse.data)
                             {
-                                TweetsListBox.Items.Add($"{tweet.text} \nPosté par @{username} le {DateTime.Now:g}");
+                                if (!string.IsNullOrEmpty(tweet.created_at))
+                                {
+                                    // Convertir la date de publication
+                                    var tweetDate = DateTime.Parse(tweet.created_at);
+                                    TweetsListBox.Items.Add($"{tweet.text} \nPosté par @{username} le {tweetDate:g}");
+                                }
+                                else
+                                {
+                                    TweetsListBox.Items.Add($"{tweet.text} \nPosté par @{username} (date inconnue)");
+                                }
                             }
                         }
                         else
