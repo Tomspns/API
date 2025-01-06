@@ -13,6 +13,7 @@ namespace TwitterFeedApp.Model
         public string Username { get; set; } // Nom d'utilisateur
         public string TweetText { get; set; } // Texte du tweet
         public string Timestamp { get; set; } // Timestamp
+        public string created_at { get; set; }
     }
 
     public class UserResponse
