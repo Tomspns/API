@@ -18,7 +18,6 @@ namespace TwitterFeedApp
         private readonly List<string> usernames = new List<string>
         {
             "elonmusk",
-            "jack"
         };
 
         public MainWindow()
