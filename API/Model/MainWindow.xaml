@@ -19,8 +19,8 @@
             <TextBox x:Name="UsernameTextBox" Width="200" LostFocus="UsernameTextBox_LostFocus" GotFocus="UsernameTextBox_GotFocus" />
             <TextBlock Text="Entrez un nom d'utilisateur" 
                        Foreground="Gray" 
-                       VerticalAlignment="Center" 
-                       Margin="5,0,0,0" 
+                       VerticalAlignment="Bottom" 
+                       Margin="5,0,0,8" 
                        IsHitTestVisible="False"
                        x:Name="PlaceholderTextBlock" />
             <Button x:Name="SearchButton" Content="Rechercher" Width="100" Margin="571,4,109,4" Click="SearchButton_Click" />
