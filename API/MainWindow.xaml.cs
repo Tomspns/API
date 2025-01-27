@@ -11,9 +11,10 @@ namespace TwitterFeedApp
 {
     public partial class MainWindow : Window
     {
-        private readonly string bearerToken = "AAAAAAAAAAAAAAAAAAAAAKitxAEAAAAAkJGgrVb4nBuKEoyTH9EazYpcFLk%3DByDukyZycv7Xfq2CL8AUuPrJWmkuZpggiVAqsqZf9NLr2aRRGj"; // Remplacez par votre Bearer Token
+        private readonly string bearerToken = "YOUR_BEARER_TOKEN"; // Remplacez par votre Bearer Token
 
         private readonly List<TweetData> ListTwitdata = new List<TweetData>();
+        private List<string> allTweets = new List<string>(); // Liste pour stocker tous les tweets chargés
 
         private readonly List<string> usernames = new List<string>
         {
@@ -29,6 +30,7 @@ namespace TwitterFeedApp
         private async void LoadTweets(int tweetLimit)
         {
             TweetsListBox.Items.Clear(); // Vider la ListBox avant de charger de nouveaux tweets
+            allTweets.Clear(); // Vider la liste des tweets pour le filtrage
 
             foreach (var username in usernames)
             {
@@ -94,11 +96,15 @@ namespace TwitterFeedApp
                             {
                                 // Convertir la date de publication
                                 var tweetDate = DateTime.Parse(tweet.created_at);
-                                TweetsListBox.Items.Add($"{tweet.text} \nPosté par @{username} le {tweetDate:g}");
+                                string tweetText = $"{tweet.text} \nPosté par @{username} le {tweetDate:g}";
+                                TweetsListBox.Items.Add(tweetText);
+                                allTweets.Add(tweetText); // Ajouter le tweet à la liste pour le filtrage
                             }
                             else
                             {
-                                TweetsListBox.Items.Add($"{tweet.text} \nPosté par @{username} (date inconnue)");
+                                string tweetText = $"{tweet.text} \nPosté par @{username} (date inconnue)";
+                                TweetsListBox.Items.Add(tweetText);
+                                allTweets.Add(tweetText); // Ajouter le tweet à la liste pour le filtrage
                             }
                         }
                     }
@@ -124,17 +130,38 @@ namespace TwitterFeedApp
             return userResponse?.data?.id;
         }
 
+        private void FilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            string filterText = UsernameTextBox.Text.Trim().ToLower(); // Texte à filtrer
+
+            TweetsListBox.Items.Clear(); // Vider la ListBox actuelle
+
+            var filteredTweets = allTweets.Where(tweet => tweet.ToLower().Contains(filterText)).ToList(); // Filtrer les tweets
+
+            if (filteredTweets.Count > 0)
+            {
+                foreach (var tweet in filteredTweets)
+                {
+                    TweetsListBox.Items.Add(tweet); // Ajouter les tweets filtrés à la ListBox
+                }
+            }
+            else
+            {
+                TweetsListBox.Items.Add("Aucun tweet ne correspond à ce filtre."); // Message si aucun tweet ne correspond
+            }
+        }
+
         // Gestion des événements pour le placeholder
         private void UsernameTextBox_GotFocus(object sender, RoutedEventArgs e)
         {
-            PlaceholderTextBlock.Visibility = Visibility.Collapsed; // Cacher le placeholder
+            UsernameTextBox.Visibility = Visibility.Collapsed; // Cacher le placeholder
         }
 
         private void UsernameTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(UsernameTextBox.Text))
             {
-                PlaceholderTextBlock.Visibility = Visibility.Visible; // Afficher le placeholder si le TextBox est vide
+                UsernameTextBox.Visibility = Visibility.Visible; // Afficher le placeholder si le TextBox est vide
             }
         }
     }
